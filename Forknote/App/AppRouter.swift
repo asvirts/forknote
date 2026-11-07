@@ -12,6 +12,8 @@ final class AppRouter {
     var tab: AppTab = .meal
     var showPaywall = false
     var focusMealField = false
+    var selectedSymptom: String?
+    var triggerSeed = false
 
     func consumeMealControl(isPro: Bool) {
         let defaults = UserDefaults.forknote
@@ -30,10 +32,16 @@ final class AppRouter {
         switch url.host {
         case "symptom":
             tab = .symptom
+            if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+               let name = components.queryItems?.first(where: { $0.name == "name" })?.value {
+                selectedSymptom = name
+            }
         case "pattern":
             tab = .pattern
         case "paywall":
             showPaywall = true
+        case "seed":
+            triggerSeed = true
         default:
             tab = .meal
             focusMealField = true

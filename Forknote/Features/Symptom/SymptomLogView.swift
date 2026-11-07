@@ -5,6 +5,7 @@ import SwiftUI
 
 struct SymptomLogView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(AppRouter.self) private var router
     @Query(sort: \SymptomLabel.sortIndex) private var labels: [SymptomLabel]
 
     @State private var selectedName: String?
@@ -64,6 +65,16 @@ struct SymptomLogView: View {
             .forknoteSettings()
         }
         .sensoryFeedback(.success, trigger: saveCount)
+        .onAppear {
+            if let name = router.selectedSymptom {
+                selectedName = name
+            }
+        }
+        .onChange(of: router.selectedSymptom) { _, name in
+            if let name {
+                selectedName = name
+            }
+        }
     }
 
     private func log(name: String, severity: Int) {
