@@ -1,0 +1,50 @@
+{
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "en_US",
+        "policyText" : "",
+        "policyURL" : ""
+      }
+    ]
+  },
+  "identifier" : "ForknoteStoreKitConfiguration",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "8.99",
+      "familyShareable" : true,
+      "internalID" : "A1B2C3D4",
+      "localizations" : [
+        {
+          "description" : "One-time unlock: pattern sentences for your whole log, your own symptom list, a plain PDF, and a Lock Screen control to log a meal.",
+          "displayName" : "Forknote Pro",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.asvirts.steady.pro",
+      "referenceName" : "Forknote Pro",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "10000002",
+    "_developerTeamID" : "H4ND8LAYMT",
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

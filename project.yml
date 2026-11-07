@@ -1,0 +1,108 @@
+name: Forknote
+options:
+  bundleIdPrefix: com.asvirts
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+  developmentLanguage: en
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_STRICT_CONCURRENCY: complete
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    DEVELOPMENT_TEAM: "H4ND8LAYMT"
+
+packages:
+  ForknoteKit:
+    path: Packages/ForknoteKit
+
+targets:
+  Forknote:
+    type: application
+    supportedDestinations: [iOS]
+    sources:
+      - path: Forknote
+        excludes:
+          - Resources/Forknote.storekit
+      - path: Forknote/Resources/Forknote.storekit
+        buildPhase: none
+    dependencies:
+      - package: ForknoteKit
+        product: ForknoteCore
+      - package: ForknoteKit
+        product: ForknoteStore
+      - package: ForknoteKit
+        product: ForknoteIntents
+      - target: ForknoteWidgets
+    entitlements:
+      path: Forknote/Forknote.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.asvirts.steady
+    info:
+      path: Forknote/Info.plist
+      properties:
+        CFBundleDisplayName: Forknote
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSApplicationCategoryType: public.app-category.healthcare-fitness
+        ITSAppUsesNonExemptEncryption: false
+        NSHumanReadableCopyright: Copyright © 2026 Andrew Virts
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        CFBundleURLTypes:
+          - CFBundleURLName: com.asvirts.steady
+            CFBundleURLSchemes:
+              - forknote
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.asvirts.steady
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        CODE_SIGN_STYLE: Automatic
+    scheme:
+      storeKitConfiguration: Forknote/Resources/Forknote.storekit
+      testTargets: []
+
+  ForknoteWidgets:
+    type: app-extension
+    supportedDestinations: [iOS]
+    sources:
+      - path: ForknoteWidgets
+      - path: Forknote/Resources/PrivacyInfo.xcprivacy
+    dependencies:
+      - package: ForknoteKit
+        product: ForknoteCore
+      - package: ForknoteKit
+        product: ForknoteIntents
+    entitlements:
+      path: ForknoteWidgets/ForknoteWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.asvirts.steady
+    info:
+      path: ForknoteWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: Forknote
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.asvirts.steady.widgets
+        TARGETED_DEVICE_FAMILY: "1,2"
+        CODE_SIGN_STYLE: Automatic
+        SKIP_INSTALL: YES
