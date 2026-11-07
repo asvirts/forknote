@@ -14,7 +14,7 @@ Character counts below were checked against App Store Connect limits. Keywords d
 - **Age Rating:** 4+. Answer None on every content question, including Medical or Treatment Information. Forknote stores what the person types. It does not provide medical or treatment information. Unrestricted Web Access: No.
 - **Copyright:** `2026 Andrew Virts`
 - **SKU:** `forknote-ios-001`
-- **Bundle ID:** `com.asvirts.steady`
+- **Bundle ID:** `com.asvirts.forknote`
 - **Primary Language:** English (U.S.)
 
 ---
@@ -83,11 +83,11 @@ First release. Log meals and symptoms on your iPhone or iPad, then read one sent
 
 ---
 
-## 7. In-App Purchase (`com.asvirts.steady.pro`)
+## 7. In-App Purchase (`com.asvirts.forknote.pro`)
 
 - **Type:** Non-Consumable
 - **Reference Name:** `Forknote Pro`
-- **Product ID:** `com.asvirts.steady.pro`
+- **Product ID:** `com.asvirts.forknote.pro`
 - **Price:** `$8.99 USD`
 - **Family Sharing:** On
 - **Display Name (12 / 30):** `Forknote Pro`
@@ -111,7 +111,7 @@ Why that answer matches the app:
 - There is no account, analytics SDK, advertising SDK, or developer server.
 - StoreKit tells the app only whether Forknote Pro is unlocked. Apple processes the payment.
 - The PDF is created on the device and leaves only through the system share sheet.
-- The App Group `group.com.asvirts.steady` holds one on-device flag for the Lock Screen control.
+- The App Group `group.com.asvirts.forknote` holds one on-device flag for the Lock Screen control.
 
 `PrivacyInfo.xcprivacy` sets `NSPrivacyTracking` to false and lists no collected data types. `UserDefaults` is declared for app functionality (`CA92.1`) and for the product-interaction flag that records whether Pro is unlocked (`1C8F.1`).
 
@@ -124,7 +124,7 @@ Forknote is a personal meal and symptom log. It is not a medical device. There i
 
 To review: open the app (it starts on Add a meal), save a meal, then open the Symptom tab and tap a name and a strength. The Pattern tab explains that a sentence needs more logged days. Settings includes Restore Purchases, Privacy Policy, Terms of Use, Support, and Delete All Local Data. The paywall also has Restore Purchases, Privacy Policy, and Terms of Use.
 
-Forknote Pro is the non-consumable com.asvirts.steady.pro at $8.99 with Family Sharing. It unlocks full-history sentences, a custom symptom list, the PDF, and the Lock Screen control. Free logging is unlimited.
+Forknote Pro is the non-consumable com.asvirts.forknote.pro at $8.99 with Family Sharing. It unlocks full-history sentences, a custom symptom list, the PDF, and the Lock Screen control. Free logging is unlimited.
 ```
 
 ---

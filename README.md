@@ -6,7 +6,7 @@ Forknote is a fast, local-first meal and symptom log for **iPhone and iPad** (iO
 
 Free to download. **Forknote Pro** ($8.99 once, Family Sharing) unlocks pattern sentences for the whole log, a custom symptom list, a plain PDF, and a Lock Screen control to log a meal. No ads, no account, no analytics.
 
-The working name was Steady. That name is already used on the App Store, including Steady: GLP-1 Tracker, so the public name is Forknote. The bundle id stays `com.asvirts.steady`.
+The working name was Steady. That name is already used on the App Store, including Steady: GLP-1 Tracker, so the public name is Forknote. The project folder stays `steady`. The bundle id is `com.asvirts.forknote`.
 
 See [docs/SPEC.md](docs/SPEC.md) for the screen flow and the pattern rules. App Store copy, URLs, and the submission checklist are in [docs/APP_STORE_METADATA.md](docs/APP_STORE_METADATA.md) and [docs/LAUNCH_CHECKLIST.md](docs/LAUNCH_CHECKLIST.md).
 
@@ -18,7 +18,7 @@ xcodegen generate                # generates Forknote.xcodeproj from project.yml
 open Forknote.xcodeproj
 ```
 
-To run on a device, set your Apple Developer Team in `project.yml` (`DEVELOPMENT_TEAM`) and register the App Group `group.com.asvirts.steady`. The group lets the Lock Screen control tell the app it was opened from the control.
+To run on a device, set your Apple Developer Team in `project.yml` (`DEVELOPMENT_TEAM`) and register the App Group `group.com.asvirts.forknote`. The group lets the Lock Screen control tell the app it was opened from the control.
 
 ### Tests and build
 

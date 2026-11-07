@@ -1,4 +1,5 @@
 import AppIntents
+import ForknoteCore
 import ForknoteIntents
 import SwiftUI
 import WidgetKit
@@ -18,7 +19,7 @@ struct ForknoteWidgetsBundle: WidgetBundle {
 
 struct LogMealControl: ControlWidget {
     var body: some ControlWidgetConfiguration {
-        StaticControlConfiguration(kind: "com.asvirts.steady.control.meal") {
+        StaticControlConfiguration(kind: ForknoteConfig.mealControlKind) {
             ControlWidgetButton(action: LogMealControlIntent()) {
                 Label("Log a meal", systemImage: "fork.knife")
             }

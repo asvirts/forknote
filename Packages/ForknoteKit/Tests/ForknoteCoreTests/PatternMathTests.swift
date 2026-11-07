@@ -205,6 +205,14 @@ import Testing
         #expect(ForknoteConfig.marketingURL.absoluteString == "https://asvirts.github.io/forknote/")
     }
 
+    @Test func identifiersMatchTheAppName() {
+        #expect(ForknoteConfig.bundleID == "com.asvirts.forknote")
+        #expect(ForknoteConfig.appGroupID == "group.com.asvirts.forknote")
+        #expect(ForknoteConfig.proProductID == "com.asvirts.forknote.pro")
+        #expect(ForknoteConfig.mealControlKind == "com.asvirts.forknote.control.meal")
+        #expect(ForknoteConfig.urlScheme == "forknote")
+    }
+
     @Test func typedFoodsSplitAndCollapse() {
         #expect(NameKey.uniqueDisplayNames(in: " eggs, toast , , coffee ") == ["eggs", "toast", "coffee"])
         #expect(NameKey.uniqueDisplayNames(in: "Greek  Yogurt") == ["Greek Yogurt"])

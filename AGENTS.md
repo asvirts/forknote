@@ -9,7 +9,7 @@ Inherits portfolio-wide rules from [`../AGENTS.md`](../AGENTS.md).
 - **Public name:** Forknote. The working name Steady is taken on the App Store (including Steady: GLP-1 Tracker, which also logs meals and symptoms).
 - **App Store title:** `Forknote: Food & Symptom Log` (28 / 30)
 - **Subtitle:** `Meals, flares. Pay once.` (24 / 30)
-- **Bundle id:** `com.asvirts.steady`. **Pro product:** `com.asvirts.steady.pro`, non-consumable, Family Sharing, **$8.99** once.
+- **Bundle id:** `com.asvirts.forknote`. **Pro product:** `com.asvirts.forknote.pro`, non-consumable, Family Sharing, **$8.99** once.
 - **Platforms:** iPhone and iPad, iOS 26+. No Mac or Watch target.
 - **Copy:** This is a personal log. It is not a medical device. Say a food **shows up alongside** a symptom. Never say "causes", "diagnoses", or "avoid". Do not call a food a trigger in the interface.
 - **Out of scope:** food database, barcode lookup, Open Food Facts, elimination-diet protocol, FODMAP catalog, chatbot, account, ads, analytics SDK.
@@ -35,4 +35,4 @@ swift scripts/generate_icon.swift Forknote/Resources/Assets.xcassets/AppIcon.app
 2. **Foods are typed strings.** Match them with `NameKey` (trim, collapse whitespace, case-insensitive). Do not stem, translate, or group "milk" with "cheese".
 3. **Pattern rules live in `PatternMath` and `docs/SPEC.md`.** Tests in `PatternMathTests` are the contract: everyday foods stay quiet, fewer than 5 exposures stay hidden, a food clustered before symptoms can surface.
 4. **Free vs Pro.** Unlimited meals and symptoms, and pattern sentences for the last 7 days, stay free. Full history, the custom symptom list, the PDF, and the Lock Screen control are Pro. Restore Purchases stays on the paywall and in Settings.
-5. **Local only.** SwiftData on device. No CloudKit and no account. The App Group `group.com.asvirts.steady` only shares the Lock Screen control flag.
+5. **Local only.** SwiftData on device. No CloudKit and no account. The App Group `group.com.asvirts.forknote` only shares the Lock Screen control flag.

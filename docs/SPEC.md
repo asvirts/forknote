@@ -2,11 +2,11 @@
 
 **App Store title:** `Forknote: Food & Symptom Log` (28/30)
 **Subtitle:** `Meals, flares. Pay once.` (24/30)
-**Bundle id:** `com.asvirts.steady`
-**Pro product:** `com.asvirts.steady.pro` — non-consumable, Family Sharing, $8.99 once
+**Bundle id:** `com.asvirts.forknote`
+**Pro product:** `com.asvirts.forknote.pro` — non-consumable, Family Sharing, $8.99 once
 **Platforms:** iPhone and iPad, iOS 26+
 
-The working name was Steady. App Store search already returns several apps by that name, including **Steady: GLP-1 Tracker**, which logs meals, symptoms, and a clinician report. Forknote is the public name. The project folder and bundle id stay on `steady`.
+The working name was Steady. App Store search already returns several apps by that name, including **Steady: GLP-1 Tracker**, which logs meals, symptoms, and a clinician report. Forknote is the public name. The project folder stays `steady`. The bundle id, App Group, widget, and Pro product use `forknote`.
 
 Forknote is the pay-once alternative to mySymptoms ($59.99/year). The thing to beat is logging speed and one plain sentence.
 
@@ -39,7 +39,7 @@ The sentence says a food **shows up alongside** a symptom. It never says "causes
 | Lock Screen control to log a meal | — | Yes |
 | Restore Purchases | Yes | Yes |
 
-StoreKit 2 product `com.asvirts.steady.pro`, Family Sharing on. Restore Purchases is on the paywall and in Settings. The paywall opens from a Pro action. It does not open on launch.
+StoreKit 2 product `com.asvirts.forknote.pro`, Family Sharing on. Restore Purchases is on the paywall and in Settings. The paywall opens from a Pro action. It does not open on launch.
 
 The Lock Screen control is part of the app extension. Tapping it opens Forknote. Pro lands on Add a meal. Otherwise the paywall opens, with Restore Purchases.
 

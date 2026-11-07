@@ -34,21 +34,21 @@ Pages can take a minute after the API call. If the API rejects the request, turn
 
 Team `H4ND8LAYMT` is already set in `project.yml`.
 
-1. Register the App Group `group.com.asvirts.steady`.
-2. App ID `com.asvirts.steady`: App Groups (that group) and In-App Purchase.
-3. App ID `com.asvirts.steady.widgets`: App Groups (that group).
+1. Register the App Group `group.com.asvirts.forknote`.
+2. App ID `com.asvirts.forknote`: App Groups (that group) and In-App Purchase.
+3. App ID `com.asvirts.forknote.widgets`: App Groups (that group).
 4. There is no iCloud container and no push capability. Do not add them.
 
 ---
 
 ## 3. App Store Connect record
 
-1. New app, iOS, name `Forknote: Food & Symptom Log`, bundle ID `com.asvirts.steady`, SKU `forknote-ios-001`, primary language English (U.S.).
+1. New app, iOS, name `Forknote: Food & Symptom Log`, bundle ID `com.asvirts.forknote`, SKU `forknote-ios-001`, primary language English (U.S.).
 2. Paste the fields from [APP_STORE_METADATA.md](./APP_STORE_METADATA.md): subtitle, categories, keywords, promotional text, description, URLs, copyright, What’s New.
 3. App Privacy: **Data Not Collected**. Publish the answers.
 4. Age rating: None on every question, including Medical or Treatment Information. The app does not provide medical content. Expected result: 4+.
 5. Create the non-consumable:
-   - Product ID `com.asvirts.steady.pro`
+   - Product ID `com.asvirts.forknote.pro`
    - Reference name `Forknote Pro`
    - Family Sharing on
    - Price $8.99
