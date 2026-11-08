@@ -5,6 +5,7 @@ enum AppTab: Hashable {
     case meal
     case symptom
     case pattern
+    case history
 }
 
 @MainActor @Observable
@@ -38,6 +39,8 @@ final class AppRouter {
             }
         case "pattern":
             tab = .pattern
+        case "history", "log":
+            tab = .history
         case "paywall":
             showPaywall = true
         case "seed":

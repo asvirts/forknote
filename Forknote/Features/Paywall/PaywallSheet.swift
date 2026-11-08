@@ -55,7 +55,7 @@ struct PaywallSheet: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 6)
                     }
-                    .buttonStyle(.glassProminent)
+                    .buttonStyle(.borderedProminent)
                     .controlSize(.large)
                     .disabled(entitlements.isBusy)
 

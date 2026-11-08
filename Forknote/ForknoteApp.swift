@@ -66,8 +66,14 @@ struct RootView: View {
                 .tabItem { Label("Symptom", systemImage: "circle.lefthalf.filled") }
                 .tag(AppTab.symptom)
             PatternView()
-                .tabItem { Label("Pattern", systemImage: "text.quote") }
+                .tabItem { Label("Pattern", systemImage: "sparkles") }
                 .tag(AppTab.pattern)
+            NavigationStack {
+                LogListView()
+                    .forknoteSettings()
+            }
+            .tabItem { Label("History", systemImage: "clock.arrow.circlepath") }
+            .tag(AppTab.history)
         }
         .sheet(isPresented: $router.showPaywall) {
             PaywallSheet()
@@ -83,41 +89,8 @@ struct RootView: View {
         .onChange(of: router.triggerSeed) { _, shouldSeed in
             guard shouldSeed else { return }
             router.triggerSeed = false
-            seedData()
+            SampleDataSeeder.seedTwoWeeks(in: modelContext)
+            router.tab = .meal
         }
-    }
-
-    private func seedData() {
-        let calendar = Calendar.current
-        let now = Date.now
-
-        try? modelContext.delete(model: Meal.self)
-        try? modelContext.delete(model: SymptomEvent.self)
-
-        for daysAgo in [5, 4, 3] {
-            if let dayDate = calendar.date(byAdding: .day, value: -daysAgo, to: now) {
-                let mealTime = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: dayDate) ?? dayDate
-                modelContext.insert(Meal(eatenAt: mealTime, foods: ["Rice"], note: ""))
-            }
-        }
-
-        for daysAgo in [2, 1] {
-            if let dayDate = calendar.date(byAdding: .day, value: -daysAgo, to: now) {
-                let meal1 = calendar.date(bySettingHour: 11, minute: 45, second: 0, of: dayDate) ?? dayDate
-                let meal2 = calendar.date(bySettingHour: 15, minute: 0, second: 0, of: dayDate) ?? dayDate
-                let symptomTime = calendar.date(bySettingHour: 12, minute: 30, second: 0, of: dayDate) ?? dayDate
-                modelContext.insert(Meal(eatenAt: meal1, foods: ["Oats", "Blueberries"], note: ""))
-                modelContext.insert(Meal(eatenAt: meal2, foods: ["Oats"], note: ""))
-                modelContext.insert(SymptomEvent(name: "Pain", severity: 3, occurredAt: symptomTime))
-            }
-        }
-
-        let todayMeal = calendar.date(bySettingHour: 11, minute: 45, second: 0, of: now) ?? now
-        let todaySymptom = calendar.date(bySettingHour: 12, minute: 30, second: 0, of: now) ?? now
-        modelContext.insert(Meal(eatenAt: todayMeal, foods: ["Oats", "Almond milk", "Blueberries"], note: "Breakfast bowl"))
-        modelContext.insert(SymptomEvent(name: "Pain", severity: 3, occurredAt: todaySymptom))
-
-        try? modelContext.save()
-        router.tab = .meal
     }
 }

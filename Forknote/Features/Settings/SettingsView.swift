@@ -20,6 +20,7 @@ struct SettingsView: View {
     @State private var exportError: String?
     @State private var legal: LegalDocumentKind?
     @State private var confirmDelete = false
+    @State private var confirmSample = false
 
     var body: some View {
         NavigationStack {
@@ -27,6 +28,7 @@ struct SettingsView: View {
                 proSection
                 symptomSection
                 exportSection
+                sampleDataSection
                 legalSection
                 aboutSection
             }
@@ -35,6 +37,7 @@ struct SettingsView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
+                        .fontWeight(.bold)
                 }
             }
             .sheet(isPresented: $showPaywall) { PaywallSheet() }
@@ -42,12 +45,12 @@ struct SettingsView: View {
                 ActivitySheet(url: file.url)
                     .ignoresSafeArea()
             }
-            .alert("Rename symptom", isPresented: renamePresented) {
+            .alert("Rename Symptom", isPresented: renamePresented) {
                 TextField("Name", text: $renameText)
                 Button("Save") { commitRename() }
                 Button("Cancel", role: .cancel) { renameTarget = nil }
             }
-            .alert("Export", isPresented: exportErrorPresented) {
+            .alert("Export Error", isPresented: exportErrorPresented) {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text(exportError ?? "")
@@ -55,11 +58,17 @@ struct SettingsView: View {
             .sheet(item: $legal) { kind in
                 LegalSheet(kind: kind)
             }
-            .alert("Delete all local data?", isPresented: $confirmDelete) {
+            .alert("Delete All Local Data?", isPresented: $confirmDelete) {
                 Button("Delete All Local Data", role: .destructive, action: deleteAll)
                 Button("Cancel", role: .cancel) {}
             } message: {
                 Text("Meals, symptoms, and custom names on this device will be removed.")
+            }
+            .alert("Load 2-Week Sample Data?", isPresented: $confirmSample) {
+                Button("Load Sample Data", action: loadSampleData)
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This replaces existing logs with 14 days of realistic meals and symptoms to preview pattern analysis and reports.")
             }
         }
     }
@@ -72,15 +81,36 @@ struct SettingsView: View {
         Binding(get: { exportError != nil }, set: { if !$0 { exportError = nil } })
     }
 
+    // MARK: - Sections
+
     private var proSection: some View {
         Section {
             if entitlements.isPro {
-                Text("You have Forknote Pro.")
+                HStack(spacing: 12) {
+                    Image(systemName: "crown.fill")
+                        .foregroundStyle(Color.accentColor)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Forknote Pro Active")
+                            .font(.headline)
+                        Text("Full history patterns, custom symptoms, and PDF export unlocked.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .padding(.vertical, 4)
             } else {
-                Button("Unlock Forknote Pro — \(entitlements.displayPrice)") {
+                Button {
                     showPaywall = true
+                } label: {
+                    HStack {
+                        Image(systemName: "crown.fill")
+                            .foregroundStyle(Color.accentColor)
+                        Text("Unlock Forknote Pro — \(entitlements.displayPrice)")
+                            .font(.headline)
+                    }
                 }
             }
+
             Button("Restore Purchases") {
                 Task {
                     let restored = await entitlements.restore()
@@ -92,15 +122,16 @@ struct SettingsView: View {
                 }
             }
             .disabled(entitlements.isBusy)
+
             if let statusBanner {
                 Text(statusBanner)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
         } header: {
-            Text("Forknote Pro")
+            Label("Membership", systemImage: "crown")
         } footer: {
-            Text("One-time purchase. Family Sharing included.")
+            Text("One-time purchase for iPhone and iPad. Family Sharing included. No subscription.")
         }
     }
 
@@ -126,7 +157,7 @@ struct SettingsView: View {
 
             if entitlements.isPro {
                 HStack {
-                    TextField("Add a symptom", text: $newName)
+                    TextField("Add a custom symptom", text: $newName)
                         .textInputAutocapitalization(.words)
                         .autocorrectionDisabled()
                         .onSubmit(addLabel)
@@ -135,25 +166,61 @@ struct SettingsView: View {
                 }
             } else {
                 Button(PatternCopy.proSymptoms) { showPaywall = true }
+                    .foregroundStyle(Color.accentColor)
             }
         } header: {
-            Text("Symptoms")
+            Label("Symptoms List", systemImage: "list.bullet")
         } footer: {
-            Text(entitlements.isPro ? "Keep at least one. Renaming updates earlier logs of that name." : PatternCopy.proSymptoms)
+            Text(entitlements.isPro ? "Keep at least one. Renaming updates earlier logs of that name." : "Upgrade to Pro to customize symptom names.")
         }
     }
 
     private var exportSection: some View {
         Section {
             if entitlements.isPro {
-                Button("Export PDF") { exportPDF() }
+                Button {
+                    exportPDF()
+                } label: {
+                    HStack {
+                        Image(systemName: "doc.text")
+                        Text("Export Clinician PDF")
+                    }
+                }
             } else {
                 Button(PatternCopy.proPDF) { showPaywall = true }
+                    .foregroundStyle(Color.accentColor)
             }
         } header: {
-            Text("PDF")
+            Label("Reports", systemImage: "square.and.arrow.up")
         } footer: {
-            Text("A plain page of meals, symptoms, and sentences.")
+            Text("Generates a clean, 1-page report of meals, symptoms, and observed patterns to share at a visit.")
+        }
+    }
+
+    private var sampleDataSection: some View {
+        Section {
+            Button {
+                confirmSample = true
+            } label: {
+                HStack {
+                    Image(systemName: "wand.and.stars")
+                        .foregroundStyle(Color.accentColor)
+                    Text("Load 2-Week Sample Data")
+                }
+            }
+
+            Button(role: .destructive) {
+                confirmDelete = true
+            } label: {
+                HStack {
+                    Image(systemName: "trash")
+                    Text("Clear All Local Data")
+                }
+            }
+        } header: {
+            Label("Demo & Data", systemImage: "tray.2")
+        } footer: {
+            Text("Sample data populates 14 days of realistic logs to preview how pattern discovery and clinician reports work.")
         }
     }
 
@@ -161,28 +228,44 @@ struct SettingsView: View {
         Section {
             Button("Privacy Policy") { legal = .privacy }
             Button("Terms of Use") { legal = .terms }
-            Link("Support", destination: ForknoteConfig.supportURL)
+            Link("Online Support", destination: ForknoteConfig.supportURL)
             Link("Email Support", destination: ForknoteConfig.supportMailtoURL)
-            Button("Delete All Local Data", role: .destructive) {
-                confirmDelete = true
-            }
         } header: {
-            Text("Legal")
+            Label("Legal & Support", systemImage: "hand.raised")
         }
     }
 
     private var aboutSection: some View {
         Section {
             Text(PatternCopy.disclaimer)
-            Text("Meals and symptoms stay on this device. Forknote does not collect data.")
-            if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
-                Text("Version \(version)")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+            HStack {
+                Text("Privacy")
+                Spacer()
+                Text("Data Not Collected")
                     .foregroundStyle(.secondary)
             }
+            HStack {
+                Text("Storage")
+                Spacer()
+                Text("100% On-Device")
+                    .foregroundStyle(.secondary)
+            }
+            if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
+                HStack {
+                    Text("Version")
+                    Spacer()
+                    Text(version)
+                        .foregroundStyle(.secondary)
+                }
+            }
         } header: {
-            Text("About")
+            Label("About", systemImage: "info.circle")
         }
     }
+
+    // MARK: - Actions
 
     private func addLabel() {
         guard let display = NameKey.displayForm(newName), let key = NameKey.normalize(display) else { return }
@@ -210,6 +293,11 @@ struct SettingsView: View {
             statusBanner = "You already have that one."
         }
         self.renameTarget = nil
+    }
+
+    private func loadSampleData() {
+        SampleDataSeeder.seedTwoWeeks(in: modelContext)
+        statusBanner = "Loaded 2 weeks of sample meals and symptoms."
     }
 
     private func deleteAll() {

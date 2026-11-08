@@ -10,7 +10,7 @@ struct MealLogView: View {
     @Query(sort: \SymptomEvent.occurredAt, order: .reverse) private var symptoms: [SymptomEvent]
 
     @State private var draft = MealDraft()
-    @State private var editingID: UUID?
+    @State private var editingMeal: Meal?
     @State private var undoID: UUID?
     @State private var saveCount = 0
     @FocusState private var foodFocused: Bool
@@ -34,43 +34,29 @@ struct MealLogView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                if let last = meals.first {
-                    Button {
-                        repeatMeal(last)
-                    } label: {
-                        Label("Repeat last meal", systemImage: "arrow.clockwise")
-                            .frame(maxWidth: .infinity)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    if let last = meals.first {
+                        repeatMealCard(last)
                     }
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 8)
-                    .accessibilityHint("Logs the same foods again, with the time set to now.")
-                }
 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
-                        MealEditorForm(
-                            draft: $draft,
-                            recents: recents,
-                            saveTitle: "Save meal",
-                            foodFocused: $foodFocused,
-                            onSave: saveNewMeal
-                        )
-                        todaySection
-                    }
-                    .padding(20)
-                    .readableColumn()
+                    mealEditorCard
+
+                    todaySection
                 }
-                .scrollDismissesKeyboard(.interactively)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+                .readableColumn()
             }
+            .background(Color.surfaceBackground)
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle("Add a meal")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .forknoteSettings()
             .safeAreaInset(edge: .bottom) {
                 if undoID != nil {
                     undoBar
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
         }
@@ -78,115 +64,346 @@ struct MealLogView: View {
         .task(id: undoID) {
             guard undoID != nil else { return }
             try? await Task.sleep(for: .seconds(4))
-            undoID = nil
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                undoID = nil
+            }
         }
-        .onAppear { foodFocused = true }
+        .onAppear {
+            foodFocused = true
+        }
         .onChange(of: router.focusMealField) { _, shouldFocus in
             guard shouldFocus else { return }
             foodFocused = true
             router.focusMealField = false
         }
-        .sheet(isPresented: editingPresented) {
-            if let editingID, let meal = meals.first(where: { $0.id == editingID }) {
-                MealEditCover(meal: meal)
-            }
+        .sheet(item: $editingMeal) { meal in
+            MealEditCover(meal: meal)
         }
     }
 
-    private var editingPresented: Binding<Bool> {
-        Binding(
-            get: { editingID != nil },
-            set: { if !$0 { editingID = nil } }
-        )
+    // MARK: - Repeat Last Meal Card
+
+    private func repeatMealCard(_ meal: Meal) -> some View {
+        Button {
+            repeatMeal(meal)
+        } label: {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(Color.accentColor.opacity(0.12))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "arrow.clockwise")
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(Color.accentColor)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Repeat Last Meal")
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                    Text(meal.foods.joined(separator: ", "))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+
+                Spacer()
+
+                Image(systemName: "plus.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(Color.accentColor)
+            }
+            .forknoteCardStyle()
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("Logs the same foods again with the current time.")
     }
 
-    private var todaySection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+    // MARK: - Meal Editor Card
+
+    private var mealEditorCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Text("Today")
-                    .font(.title3.weight(.semibold))
+                Label("New Meal", systemImage: "fork.knife")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
                 Spacer()
-                NavigationLink("Full log") {
-                    LogListView()
+                DatePicker("", selection: $draft.eatenAt)
+                    .labelsHidden()
+                    .datePickerStyle(.compact)
+            }
+
+            if !draft.foods.isEmpty {
+                FlowLayout(spacing: 8) {
+                    ForEach(draft.foods, id: \.self) { food in
+                        FoodChipView(name: food) {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+                                draft.foods.removeAll { $0 == food }
+                            }
+                        }
+                    }
                 }
+                .animation(.spring(response: 0.35, dampingFraction: 0.8), value: draft.foods)
+            }
+
+            HStack {
+                Image(systemName: "text.badge.plus")
+                    .foregroundStyle(.secondary)
+                TextField("Food name (e.g. Oats, Coffee)...", text: $draft.foodField)
+                    .textInputAutocapitalization(.words)
+                    .autocorrectionDisabled()
+                    .submitLabel(.done)
+                    .focused($foodFocused)
+                    .onSubmit(commitField)
+                if !draft.foodField.isEmpty {
+                    Button(action: commitField) {
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundStyle(Color.accentColor)
+                    }
+                }
+            }
+            .padding(14)
+            .background(Color(uiColor: .tertiarySystemFill), in: .rect(cornerRadius: 12))
+
+            if !recents.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Quick add recent:")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
+                    FlowLayout(spacing: 8) {
+                        ForEach(recents.prefix(8), id: \.self) { name in
+                            Button {
+                                append(name)
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "plus")
+                                        .font(.caption2.weight(.bold))
+                                    Text(name)
+                                        .font(.subheadline)
+                                }
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Color(uiColor: .tertiarySystemFill), in: .capsule)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+            }
+
+            TextField("Note, optional (e.g. Oat milk latte, breakfast)", text: $draft.note, axis: .vertical)
+                .lineLimit(1...3)
                 .font(.subheadline)
+                .padding(12)
+                .background(Color(uiColor: .tertiarySystemFill), in: .rect(cornerRadius: 12))
+
+            Button(action: saveNewMeal) {
+                HStack {
+                    Image(systemName: "checkmark")
+                        .font(.headline.weight(.bold))
+                    Text("Save Meal")
+                        .font(.headline)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .disabled(draft.foods.isEmpty && NameKey.uniqueDisplayNames(in: draft.foodField).isEmpty)
+        }
+        .forknoteCardStyle()
+    }
+
+    // MARK: - Today Section
+
+    private var todaySection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("Today's Log")
+                    .font(.title3.weight(.bold))
+                Spacer()
+                NavigationLink {
+                    LogListView()
+                } label: {
+                    HStack(spacing: 4) {
+                        Text("Full History")
+                        Image(systemName: "chevron.right")
+                            .font(.caption.weight(.semibold))
+                    }
+                    .font(.subheadline.weight(.medium))
+                }
             }
 
             if todayMeals.isEmpty && todaySymptoms.isEmpty {
-                Text("Nothing logged today yet.")
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(todaySymptoms) { event in
-                    symptomRow(event)
+                VStack(spacing: 8) {
+                    Image(systemName: "tray")
+                        .font(.title2)
+                        .foregroundStyle(.tertiary)
+                    Text("Nothing logged today yet.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
-                ForEach(todayMeals) { meal in
-                    mealRow(meal)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 28)
+                .forknoteCardStyle()
+            } else {
+                VStack(spacing: 10) {
+                    ForEach(todayItems) { item in
+                        switch item {
+                        case .meal(let meal):
+                            mealRow(meal)
+                        case .symptom(let event):
+                            symptomRow(event)
+                        }
+                    }
                 }
             }
         }
-        .padding(.top, 8)
+    }
+
+    private enum TodayItem: Identifiable {
+        case meal(Meal)
+        case symptom(SymptomEvent)
+
+        var id: UUID {
+            switch self {
+            case .meal(let m): m.id
+            case .symptom(let s): s.id
+            }
+        }
+
+        var timestamp: Date {
+            switch self {
+            case .meal(let m): m.eatenAt
+            case .symptom(let s): s.occurredAt
+            }
+        }
+    }
+
+    private var todayItems: [TodayItem] {
+        let m = todayMeals.map { TodayItem.meal($0) }
+        let s = todaySymptoms.map { TodayItem.symptom($0) }
+        return (m + s).sorted { $0.timestamp > $1.timestamp }
     }
 
     private func mealRow(_ meal: Meal) -> some View {
-        HStack(alignment: .top) {
-            Button {
-                editingID = meal.id
-            } label: {
-                VStack(alignment: .leading, spacing: 4) {
+        HStack(alignment: .top, spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(Color.accentColor.opacity(0.12))
+                    .frame(width: 36, height: 36)
+                Image(systemName: "fork.knife")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.accentColor)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
                     Text(meal.eatenAt.formatted(date: .omitted, time: .shortened))
-                        .font(.caption)
+                        .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
-                    Text(meal.foods.joined(separator: ", "))
-                        .foregroundStyle(.primary)
-                        .multilineTextAlignment(.leading)
-                    if !meal.note.isEmpty {
-                        Text(meal.note)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                    Spacer()
+                    Button {
+                        editingMeal = meal
+                    } label: {
+                        Text("Edit")
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(Color.accentColor)
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+
+                Text(meal.foods.joined(separator: ", "))
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(.primary)
+
+                if !meal.note.isEmpty {
+                    Text(meal.note)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
-            .buttonStyle(.plain)
-            Button(role: .destructive) {
-                modelContext.delete(meal)
-                try? modelContext.save()
-            } label: {
-                Image(systemName: "trash")
+        }
+        .padding(14)
+        .background(Color.cardBackground, in: .rect(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(Color.primary.opacity(0.04), lineWidth: 1)
+        )
+        .contextMenu {
+            Button("Edit Meal") {
+                editingMeal = meal
             }
-            .accessibilityLabel("Delete meal")
+            Button("Repeat Meal") {
+                repeatMeal(meal)
+            }
+            Button("Delete", role: .destructive) {
+                withAnimation {
+                    modelContext.delete(meal)
+                    try? modelContext.save()
+                }
+            }
         }
     }
 
     private func symptomRow(_ event: SymptomEvent) -> some View {
-        HStack {
+        HStack(alignment: .top, spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(Color.orange.opacity(0.12))
+                    .frame(width: 36, height: 36)
+                Image(systemName: "circle.lefthalf.filled")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.orange)
+            }
+
             VStack(alignment: .leading, spacing: 4) {
-                Text(event.occurredAt.formatted(date: .omitted, time: .shortened))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text("\(event.name) · \(event.severity)")
+                HStack {
+                    Text(event.occurredAt.formatted(date: .omitted, time: .shortened))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    SeverityBadge(severity: event.severity, compact: false)
+                }
+
+                Text(event.name)
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(.primary)
             }
-            Spacer(minLength: 8)
-            Button(role: .destructive) {
-                modelContext.delete(event)
-                try? modelContext.save()
-            } label: {
-                Image(systemName: "trash")
+        }
+        .padding(14)
+        .background(Color.cardBackground, in: .rect(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(Color.primary.opacity(0.04), lineWidth: 1)
+        )
+        .contextMenu {
+            Button("Delete", role: .destructive) {
+                withAnimation {
+                    modelContext.delete(event)
+                    try? modelContext.save()
+                }
             }
-            .accessibilityLabel("Delete symptom")
         }
     }
 
+    // MARK: - Actions
+
     private var undoBar: some View {
         HStack {
-            Text("Repeated your last meal.")
+            Image(systemName: "arrow.clockwise")
+                .foregroundStyle(Color.accentColor)
+            Text("Repeated last meal")
+                .font(.subheadline.weight(.medium))
             Spacer()
-            Button("Undo") { undoRepeat() }
+            Button("Undo") {
+                withAnimation { undoRepeat() }
+            }
+            .font(.subheadline.weight(.bold))
+            .foregroundStyle(Color.accentColor)
         }
-        .font(.subheadline)
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(.thinMaterial, in: .rect(cornerRadius: 14))
+        .background(.ultraThinMaterial, in: .rect(cornerRadius: 14))
         .padding(.horizontal, 16)
         .padding(.bottom, 8)
     }
@@ -202,9 +419,11 @@ struct MealLogView: View {
         )
         modelContext.insert(meal)
         try? modelContext.save()
-        draft = MealDraft()
-        saveCount += 1
-        foodFocused = true
+        withAnimation {
+            draft = MealDraft()
+            saveCount += 1
+            foodFocused = true
+        }
     }
 
     private func commitField() {
@@ -217,15 +436,19 @@ struct MealLogView: View {
     private func append(_ name: String) {
         guard let key = NameKey.normalize(name) else { return }
         guard !draft.foods.contains(where: { NameKey.normalize($0) == key }) else { return }
-        draft.foods.append(name)
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+            draft.foods.append(NameKey.displayForm(name) ?? name)
+        }
     }
 
     private func repeatMeal(_ meal: Meal) {
-        let copy = Meal(eatenAt: .now, foods: meal.foods, note: "")
+        let copy = Meal(eatenAt: .now, foods: meal.foods, note: meal.note)
         modelContext.insert(copy)
         try? modelContext.save()
-        undoID = copy.id
-        saveCount += 1
+        withAnimation {
+            undoID = copy.id
+            saveCount += 1
+        }
     }
 
     private func undoRepeat() {
@@ -239,87 +462,7 @@ struct MealLogView: View {
     }
 }
 
-struct MealEditorForm: View {
-    @Binding var draft: MealDraft
-    let recents: [String]
-    let saveTitle: String
-    var foodFocused: FocusState<Bool>.Binding
-    let onSave: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            DatePicker("Time", selection: $draft.eatenAt)
-                .datePickerStyle(.compact)
-
-            if !draft.foods.isEmpty {
-                FlowLayout(spacing: 8) {
-                    ForEach(draft.foods, id: \.self) { food in
-                        HStack(spacing: 6) {
-                            Text(food)
-                            Button {
-                                draft.foods.removeAll { $0 == food }
-                            } label: {
-                                Image(systemName: "xmark")
-                                    .font(.caption.weight(.bold))
-                            }
-                            .accessibilityLabel("Remove \(food)")
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(.quaternary.opacity(0.45), in: .capsule)
-                    }
-                }
-            }
-
-            TextField("Food name", text: $draft.foodField)
-                .textInputAutocapitalization(.words)
-                .autocorrectionDisabled()
-                .submitLabel(.done)
-                .focused(foodFocused)
-                .onSubmit(commitField)
-                .padding(14)
-                .background(.quaternary.opacity(0.35), in: .rect(cornerRadius: 12))
-
-            if !recents.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Recent")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    FlowLayout(spacing: 8) {
-                        ForEach(recents, id: \.self) { name in
-                            Button(name) { append(name) }
-                                .buttonStyle(.bordered)
-                                .controlSize(.small)
-                        }
-                    }
-                }
-            }
-
-            TextField("Note, optional", text: $draft.note, axis: .vertical)
-                .lineLimit(1...3)
-                .textInputAutocapitalization(.sentences)
-
-            Button(saveTitle, action: onSave)
-                .buttonStyle(.glassProminent)
-                .controlSize(.large)
-                .frame(maxWidth: .infinity)
-                .disabled(draft.foods.isEmpty && NameKey.uniqueDisplayNames(in: draft.foodField).isEmpty)
-        }
-    }
-
-    private func commitField() {
-        for name in NameKey.uniqueDisplayNames(in: draft.foodField) {
-            append(name)
-        }
-        draft.foodField = ""
-    }
-
-    private func append(_ name: String) {
-        guard let key = NameKey.normalize(name) else { return }
-        guard !draft.foods.contains(where: { NameKey.normalize($0) == key }) else { return }
-        draft.foods.append(NameKey.displayForm(name) ?? name)
-    }
-}
+// MARK: - Meal Edit Cover
 
 struct MealEditCover: View {
     @Environment(\.dismiss) private var dismiss
@@ -345,13 +488,52 @@ struct MealEditCover: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                MealEditorForm(
-                    draft: $draft,
-                    recents: recents,
-                    saveTitle: "Save changes",
-                    foodFocused: $foodFocused,
-                    onSave: save
-                )
+                VStack(alignment: .leading, spacing: 18) {
+                    DatePicker("Time", selection: $draft.eatenAt)
+                        .datePickerStyle(.compact)
+
+                    if !draft.foods.isEmpty {
+                        FlowLayout(spacing: 8) {
+                            ForEach(draft.foods, id: \.self) { food in
+                                FoodChipView(name: food) {
+                                    draft.foods.removeAll { $0 == food }
+                                }
+                            }
+                        }
+                    }
+
+                    TextField("Add food name...", text: $draft.foodField)
+                        .textInputAutocapitalization(.words)
+                        .autocorrectionDisabled()
+                        .submitLabel(.done)
+                        .onSubmit(commitField)
+                        .padding(14)
+                        .background(Color(uiColor: .tertiarySystemFill), in: .rect(cornerRadius: 12))
+
+                    if !recents.isEmpty {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Recent")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            FlowLayout(spacing: 8) {
+                                ForEach(recents.prefix(6), id: \.self) { name in
+                                    Button(name) {
+                                        if let key = NameKey.normalize(name), !draft.foods.contains(where: { NameKey.normalize($0) == key }) {
+                                            draft.foods.append(name)
+                                        }
+                                    }
+                                    .buttonStyle(.bordered)
+                                    .controlSize(.small)
+                                }
+                            }
+                        }
+                    }
+
+                    TextField("Note, optional", text: $draft.note, axis: .vertical)
+                        .lineLimit(1...3)
+                        .padding(12)
+                        .background(Color(uiColor: .tertiarySystemFill), in: .rect(cornerRadius: 12))
+                }
                 .padding(20)
                 .readableColumn()
             }
@@ -361,16 +543,25 @@ struct MealEditCover: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                 }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { save() }
+                        .fontWeight(.bold)
+                }
             }
         }
     }
 
-    private func save() {
+    private func commitField() {
         for name in NameKey.uniqueDisplayNames(in: draft.foodField) {
             if let key = NameKey.normalize(name), !draft.foods.contains(where: { NameKey.normalize($0) == key }) {
                 draft.foods.append(name)
             }
         }
+        draft.foodField = ""
+    }
+
+    private func save() {
+        commitField()
         guard !draft.foods.isEmpty else { return }
         meal.eatenAt = draft.eatenAt
         meal.foods = draft.foods
